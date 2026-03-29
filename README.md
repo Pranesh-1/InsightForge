@@ -1,97 +1,78 @@
 # InsightForge: Multi-Agent RAG Intelligence System
 
-![InsightForge Logo](https://img.shields.io/badge/InsightForge-v1.0.4-gold?style=for-the-badge&logo=appveyor)
-![Framework](https://img.shields.io/badge/Next.js%2016-Black?style=for-the-badge&logo=next.js)
-![Backend](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)
-![AI Core](https://img.shields.io/badge/Gemini%201.5%20Flash-4285F4?style=for-the-badge&logo=google-gemini)
+Version: 1.0.4
+Status: Production Ready
+Core: Gemini 2.0 Flash
 
-**InsightForge** is a high-performance Multi-Agent RAG (Retrieval-Augmented Generation) orchestrator designed for enterprise-grade document intelligence. It utilizes a sophisticated pipeline of AI agents to decompose complex queries, retrieve high-density information, and synthesize grounded insights with multi-stage reasoning.
+InsightForge is a high-performance Multi-Agent Retrieval-Augmented Generation (RAG) orchestrator designed for enterprise-grade document intelligence. It utilizes a sophisticated pipeline of specialized AI agents to decompose complex queries, retrieve high-density information, and synthesize grounded insights with multi-stage reasoning.
 
----
+## Architecture and Components
 
-## 🛰️ Architecture Overview
+The system is built on a modular multi-agent architecture where specialized nodes collaborate to provide accurate and context-aware responses.
 
-InsightForge is built on a **Modular Multi-Agent Architecture** where specialized agents collaborate to provide the most accurate and context-aware responses:
+### 1. Agentic Pipeline
+- **Query Rewriter Agent**: Analyzes user input and generates optimized search queries. It focuses on keyword expansion, synonym matching, and intent clarification to bridge the gap between user language and document indexing.
+- **Query Planner Agent**: Responsible for complex query decomposition. It breaks down multifaceted questions into a logical chain of sub-queries, facilitating structured information retrieval across different document sections.
+- **Ranking Agent**: Utilizes cross-encoders (specifically `bge-reranker-small`) to evaluate the relevance of retrieved document chunks against the original intent. This ensures that only the highest quality context is provided to the reasoning engine.
+- **Reasoning and Response Agent**: The final synthesis layer. It integrates the re-ranked context to generate a comprehensive response. It is programmed for strict grounding, ensuring all claims are backed by retrieved sources with precise citation mapping.
 
-1.  **Query Rewriter Agent**: Optimizes user input for better retrieval by expanding keywords and refining intent.
-2.  **Query Planner Agent**: Decomposes complex multi-faceted questions into a chain of sub-queries.
-3.  **Hybrid Retrieval Service**: Combines **Vector Similarity (Dense)** and **BM25 (Sparse)** searches for maximum precision.
-4.  **Ranking Agent**: Re-ranks retrieved chunks using cross-encoders (`bge-reranker-small`) to ensure relevance.
-5.  **Reasoning & Response Agent**: Synthesizes the final answer, ensuring all claims are grounded in the retrieved sources with precise citation mapping.
+### 2. Search and Retrieval Services
+- **Hybrid Retrieval Service**: Implements a dual-path search strategy. 
+    - **Dense Retrieval**: Uses vector similarity based on `bge-small-en-v1.5` embeddings.
+    - **Sparse Retrieval**: Implements BM25 for precise keyword-level matching.
+- **Consolidated Ranking**: Merges results from both paths to provide a unified relevance score.
 
----
+### 3. Data Ingestion Infrastructure
+- **Direct Stream Ingestion**: bBypasses traditional multipart parsing overhead by implementing a raw request body streamer. This allows for the upload of large files (PDF, CSV) without triggering browser-side or network-level timeouts.
+- **Asynchronous Processing**: All ingestion tasks (parsing, chunking, embedding) are handled by background workers. The API returns a 202 Accepted status immediately upon file buffering.
+- **Recursive Chunking**: Documents are split into 800-token segments with 200-token overlaps to maintain semantic continuity across boundaries.
 
-## 💎 Key Features
+## Technical Stack
 
-- **🚀 Obsidian Amber UI**: A premium, "hyper-glass" dashboard designed for visual excellence and high interaction.
-- **⚡ Async Streaming Ingestion**: Handle massive document uploads (PDF, CSV, Web) without browser timeouts via chunked background workers.
-- **🧠 Neural Topology Graph**: Visualize the relationships between documents and insights in a dynamic, 3D-effect knowledge graph.
-- **🛡️ Secure Neural Core**: Fully integrated with **Gemini 1.5 Flash**, offering a 1.5M token context window for deep document analysis.
-- **📊 Intelligence Dashboard**: Real-time analytics on retrieval similarity, source density, and query performance.
+- **Frontend**: Developed with Next.js 16 (using Turbopack) and Tailwind CSS. The interface utilizes Framer Motion for high-fidelity animations and Lucide React for consistent iconography.
+- **Backend**: Built on FastAPI 0.100+ with AnyIO for asynchronous execution and aiofiles for non-blocking file I/O operations.
+- **AI Core**: Fully integrated with the Google Gemini API, specifically leveraging the Gemini 2.0 Flash model for its large context window (1.5M tokens) and low latency.
+- **Vector Database**: Utilizes Qdrant for high-performance vector storage and retrieval. The system includes an automated in-memory fallback for environments where a dedicated Qdrant instance is unavailable.
 
----
+## Intelligence Visualization
 
-## 🛠️ Tech Stack
+### Neural Topology Graph
+The application includes a dynamic knowledge topology visualizer that maps the relationships between document nodes, generated insights, and suggested research probes. This graph provides a visual representation of the system's internal session intelligence.
 
-- **Frontend**: Next.js 16 (Turbopack), Tailwind CSS, Framer Motion, Lucide React.
-- **Backend**: FastAPI, AnyIO, aiofiles.
-- **AI/LLM**: Google Gemini 1.5 Flash, BAAI/bge-small-en embeddings.
-- **Vector Database**: Qdrant (with In-memory fallback).
-- **Processing**: PyPDF, PyMuPDF, Scrapy (Web Crawling).
+### Analytics Dashboard
+Real-time monitoring of RAG performance metrics, including:
+- Vector similarity distribution.
+- Source density analysis.
+- Detailed token cost tracking per query.
 
----
+## Directory Structure
 
-## 🚀 Getting Started
+- `/backend`: FastAPI source code, agent definitions, and ingestion services.
+- `/frontend`: Next.js application, React components, and UI state management.
+- `/pipelines`: Core RAG orchestration logic.
+- `/services`: Abstractions for embeddings, vector DB, and external AI clients.
+- `/tests`: Automated system verification and unit tests.
 
-### 1. Prerequisites
-- Python 3.10+
-- Node.js 18+
-- Google Gemini API Key
+## Installation and Configuration
 
-### 2. Installation
+### Prerequisites
+- Python 3.10 or higher
+- Node.js 18 or higher
+- Access to Google Gemini API
 
-#### Backend
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-```
+### Backend Setup
+1. Initialize a Python virtual environment.
+2. Install dependencies: `pip install -r requirements.txt`.
+3. Configure the `.env` file with your `GEMINI_API_KEY`.
 
-#### Frontend
-```bash
-cd frontend
-npm install
-```
+### Frontend Setup
+1. Navigate to the frontend directory.
+2. Install dependencies: `npm install`.
+3. Start the development server: `npm run dev`.
 
-### 3. Environment Setup
-Create a `.env` file in the `backend/` directory:
-```env
-GEMINI_API_KEY=your_key_here
-QDRANT_URL=localhost:6333
-```
+### Execution
+The backend should be launched using uvicorn:
+`python -m uvicorn backend.main:app --port 8002 --reload`
 
-### 4. Running the Application
-```bash
-# Terminal 1: Backend
-python -m uvicorn backend.main:app --port 8002 --reload
-
-# Terminal 2: Frontend
-npm run dev
-```
-
----
-
-## 🧪 System Verification
-Execute the core test suite to ensure neural handshake stability:
-```bash
-python -m pytest tests/test_core.py
-```
-
----
-
-## 🛡️ License
-Distributed under the MIT License. See `LICENSE` for more information.
-
----
-*Built with ❤️ at InsightForge AI Labs.*
+## License
+InsightForge is distributed under the MIT License.
