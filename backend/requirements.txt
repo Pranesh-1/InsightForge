@@ -1,0 +1,17 @@
+fastapi
+uvicorn
+pydantic
+python-multipart
+langchain
+langchain-openai
+langchain-community
+langchain-groq
+qdrant-client
+sentence-transformers
+pypdf
+beautifulsoup4
+pandas
+redis
+rank-bm25
+tiktoken
+python-dotenv
