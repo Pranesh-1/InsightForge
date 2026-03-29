@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+@theme {
+  --color-obsidian: #050505;
+  --color-obsidian-soft: #0A0A0A;
+  --color-obsidian-card: #0F0F0F;
+  --color-amber-primary: #FFBF00;
+  --color-amber-secondary: #FFD700;
+  --color-amber-dim: #FFBF0026; /* 15% opacity */
+  --color-text-luxury: #FDFCFB;
+  --color-text-dim: #A1A1A1;
+  --color-border-glow: #FFBF0033; /* 20% opacity */
+}
+
+:root {
+  --background: #050505;
+  --foreground: #FDFCFB;
+  --amber: #FFBF00;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, .font-outfit {
+  font-family: 'Outfit', sans-serif;
+}
+
+/* Hyper-Glassmorphism */
+.glass-obsidian {
+  background: rgba(10, 10, 10, 0.75);
+  backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 191, 0, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+}
+
+.glass-amber {
+  background: rgba(255, 191, 0, 0.03);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 191, 0, 0.15);
+}
+
+/* Mesh Gradient Background */
+.mesh-bg {
+  background-color: #050505;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(255, 191, 0, 0.05) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(201, 162, 39, 0.03) 0px, transparent 50%);
+}
+
+/* Glow Effects */
+.amber-glow {
+  box-shadow: 0 0 20px rgba(255, 191, 0, 0.15);
+}
+
+.amber-text-glow {
+  text-shadow: 0 0 10px rgba(255, 191, 0, 0.5);
+}
+
+/* Custom Scrollbar - Obsidian Edition */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #050505;
+}
+::-webkit-scrollbar-thumb {
+  background: #1A1A1A;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #FFBF00;
+}
+
+/* Animations */
+@keyframes pulse-amber {
+  0%, 100% { border-color: rgba(255, 191, 0, 0.1); }
+  50% { border-color: rgba(255, 191, 0, 0.4); }
+}
+
+.animate-border-pulse {
+  animation: pulse-amber 3s infinite;
+}
