@@ -1,5 +1,11 @@
 # InsightForge: Multi-Agent RAG Intelligence System
 
+![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi&logoColor=white)
+![Gemini 2.0 Flash](https://img.shields.io/badge/Gemini_2.0_Flash-4285F4?style=for-the-badge&logo=google-gemini&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Qdrant](https://img.shields.io/badge/Qdrant-DD2727?style=for-the-badge&logo=qdrant&logoColor=white)
+
 Version: 1.0.4
 Status: Production Ready
 Core: Gemini 2.0 Flash
