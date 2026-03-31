@@ -6,31 +6,31 @@ import json
 class InsightService:
     def __init__(self, model_name: str = REASONING_MODEL):
         self.client = GeminiClient()
-        self.system_prompt = (
-            "You are an Elite Document Intelligence Analyst. Analyze the document content and provide three distinct outputs in a single JSON block:\n"
-            "1. INSIGHTS: Top 5 actionable insights.\n"
-            "2. PROBES: 3 suggested questions about this document.\n"
-            "3. TAGS: 2-3 technical keywords.\n\n"
-            "Respond ONLY with a JSON object:\n"
-            "{\"insights\": [], \"probes\": [], \"tags\": []}"
+    async def synthesize_intelligence(self, content: str, filename: str = "Synthesis") -> dict:
+        prompt = (
+            "You are an Elite Document Intelligence Analyst. Analyze the document context and provide three distinct outputs in a single JSON block:\n"
+            "1. INSIGHTS: Top 5 distinct, high-impact actionable observations in Markdown bullet format (•).\n"
+            "2. PROBES: 3 simple, concise, one-line questions this document can answer. Each probe must have 'text' and 'source' fields.\n"
+            "3. TAGS: 2-3 technical domain keywords.\n\n"
+            f"If the content is primarily from '{filename}', attribute probes to it. If it spans multiple contexts, label as 'Synthesis'.\n"
+            "Respond ONLY with a valid JSON object. No conversational text.\n"
+            "Format: {\"insights\": [\"• insight 1\", \"• insight 2\"...], \"probes\": [{\"text\": \"Simple Question?\", \"source\": \"...\"}], \"tags\": [...]}"
         )
-
-    async def synthesize_intelligence(self, content: str) -> dict:
         messages = [
-            {"role": "system", "content": self.system_prompt},
-            {"role": "user", "content": f"Content:\n{content[:10000]}"}
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": f"CONTENT STREAM FOR ANALYSIS ({filename}):\n\n{content[:15000]}"}
         ]
         try:
             text = await self.client.invoke(messages)
             # Handle potential markdown wrapping
-            if text.startswith("```json"):
-                text = text[7:-3].strip()
-            elif text.startswith("```"):
-                text = text[3:-3].strip()
-            return json.loads(text)
+            if "```json" in text:
+                text = text.split("```json")[1].split("```")[0].strip()
+            elif "```" in text:
+                text = text.split("```")[1].split("```")[0].strip()
+            return json.loads(text.strip())
         except Exception as e:
-            print(f"Synthesis failed: {e}")
-            return {"insights": ["Intelligence indexed."], "probes": ["Explain the core content."], "tags": ["GENERAL"]}
+            print(f"CRITICAL: Synthesis failed after retries: {e}")
+            raise  # Strictly bubble-up the error so background task status correctly shows 'error' on 429s instead of fake success.
 
     async def generate_insights(self, content: str) -> str:
         data = await self.synthesize_intelligence(content)

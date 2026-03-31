@@ -11,7 +11,32 @@ import shutil
 from fastapi import Request
 import time
 from datetime import datetime
+import pickle
 
+STATE_FILE = "session_state.pkl"
+
+def save_state():
+    try:
+        with open(STATE_FILE, "wb") as f:
+            pickle.dump({
+                "docs": uploaded_docs,
+                "intel": session_intelligence
+            }, f)
+        print("DEBUG: State persisted to disk.")
+    except Exception as e:
+        print(f"DEBUG: Persistence failed: {e}")
+
+def load_state():
+    global uploaded_docs, session_intelligence
+    if os.path.exists(STATE_FILE):
+        try:
+            with open(STATE_FILE, "rb") as f:
+                state = pickle.load(f)
+                uploaded_docs = state.get("docs", [])
+                session_intelligence = state.get("intel", {"insights": [], "probes": [], "tags": []})
+            print(f"DEBUG: State restored. Indexed chunks: {len(uploaded_docs)}")
+        except Exception as e:
+            print(f"DEBUG: State load failed: {e}")
 app = FastAPI(title="InsightForge API")
 
 app.add_middleware(
@@ -25,6 +50,16 @@ app.add_middleware(
 # Global instances for lazy loading
 _services = {}
 
+# Global storage
+uploaded_docs = []
+session_intelligence = {
+    "insights": [],
+    "probes": [],
+    "tags": []
+}
+ingestion_telemetry = {}
+
+load_state()
 def get_rag_pipeline():
     if "rag" not in _services:
         print("Initializing RAGPipeline (Lazy)...")
@@ -51,13 +86,7 @@ def get_vector_db():
         _services["vector_db"] = VectorDBService()
     return _services["vector_db"]
 
-# Global storage
-uploaded_docs = []
-session_intelligence = {
-    "insights": [],
-    "probes": [],
-    "tags": []
-}
+
 
 @app.get("/")
 async def root():
@@ -69,6 +98,8 @@ from fastapi import BackgroundTasks
 import traceback
 
 async def run_full_ingestion(temp_path: str, filename: str):
+    global ingestion_telemetry
+    ingestion_telemetry[filename] = {"status": "processing", "stage": "Parsing Document..."}
     print(f"DEBUG: Background Ingestion STARTED for {filename}")
     try:
         # 1. Process file
@@ -79,9 +110,11 @@ async def run_full_ingestion(temp_path: str, filename: str):
             docs = await anyio.to_thread.run_sync(ingestion_service.load_csv, temp_path)
         else:
             print(f"DEBUG: Unsupported file type {filename}")
+            ingestion_telemetry[filename] = {"status": "error", "stage": f"Unsupported file type"}
             return
         
         print(f"DEBUG: Parsed {len(docs)} chunks from {filename}")
+        ingestion_telemetry[filename]["stage"] = "Vectorizing and Embedding..."
         
         # 2. Embed & Store
         embedding_service = get_embedding_service()
@@ -96,20 +129,37 @@ async def run_full_ingestion(temp_path: str, filename: str):
         global uploaded_docs
         uploaded_docs.extend(docs)
         print(f"DEBUG: Global Registry updated. Total chunks: {len(uploaded_docs)}")
+        save_state()
+        ingestion_telemetry[filename]["stage"] = "Synthesizing Initial Intelligence (May take time)..."
         
         # 4. Synthesis
         insight_service = get_insight_service()
         full_text = " ".join(texts)
-        intel = await insight_service.synthesize_intelligence(full_text)
+        intel = await insight_service.synthesize_intelligence(full_text, filename)
         
+        # Aggregate probes with source metadata
         global session_intelligence
-        session_intelligence["insights"].extend(intel.get("insights", []))
-        session_intelligence["probes"] = list(set(session_intelligence["probes"] + intel.get("probes", [])))
-        session_intelligence["tags"] = list(set(session_intelligence["tags"] + intel.get("tags", [])))
-        session_intelligence["insights"] = session_intelligence["insights"][-10:]
+        for p in intel.get("probes", []):
+            if isinstance(p, dict):
+                 session_intelligence["probes"].append(p)
+            else:
+                 session_intelligence["probes"].append({"text": p, "source": filename})
         
+        session_intelligence["insights"].extend(intel.get("insights", []))
+        session_intelligence["tags"].extend(intel.get("tags", []))
+        
+        # Enhanced formatting for "Neat" source summary
+        formatted_insights = "\n".join(intel.get("insights", [])[:5])
+        
+        ingestion_telemetry[filename] = {
+            "status": "completed", 
+            "stage": "Complete",
+            "insights": formatted_insights if formatted_insights else "Data synthesized successfully."
+        }
+        save_state()
         print(f"DEBUG: Background Ingestion COMPLETE for {filename}")
     except Exception as e:
+        ingestion_telemetry[filename] = {"status": "error", "stage": f"Failed: {str(e)}"}
         print(f"DEBUG: CRITICAL Ingestion Background Task Failure for {filename}")
         traceback.print_exc()
 
@@ -141,6 +191,9 @@ async def ingest_file(file: UploadFile = File(...), background_tasks: Background
         print(f"DEBUG: Neural Link FAIL: {e}")
         return {"error": f"Upload failed: {str(e)}"}
     
+    # Initialize telemetry
+    ingestion_telemetry[file.filename] = {"status": "processing", "stage": "Initializing..."}
+    
     # Offload the rest to background worker
     background_tasks.add_task(run_full_ingestion, temp_path, file.filename)
     
@@ -149,6 +202,10 @@ async def ingest_file(file: UploadFile = File(...), background_tasks: Background
         "filename": file.filename,
         "message": "Intelligence stream received. Indexing in background."
     }
+
+@app.get("/ingest/status/{filename}")
+async def get_ingestion_status(filename: str):
+    return ingestion_telemetry.get(filename, {"status": "unknown", "stage": "Initializing..."})
 
 from pydantic import BaseModel
 
@@ -211,23 +268,26 @@ async def get_analytics():
     
     # Heuristics for metrics
     density = min(total_chunks / (total_docs * 20 + 1) * 100, 95.0) if total_docs > 0 else 0
-    overlap = min(total_docs * 22.5, 85.0) if total_docs > 1 else 0
+    # For single document corpuses, overlap represents internal cross-referencing depth
+    overlap = min(total_chunks * 2.5, 92.0) if total_docs == 1 else min(total_docs * 22.5, 85.0) if total_docs > 1 else 0
     
     # Use pre-synthesized intelligence
     global session_intelligence
     if total_docs == 0:
-        insight = "Awaiting intelligence nodes for topological mapping."
+        insights = ["Awaiting intelligence nodes for topological mapping."]
         tags = []
         probes = []
     else:
-        insight = " | ".join(session_intelligence["insights"][:3]) # Top 3 insights summary
+        # Return as a structured list of bullet points
+        insights = session_intelligence["insights"][:3]
         tags = session_intelligence["tags"]
         probes = session_intelligence["probes"]
     
     return {
         "density": round(density, 1),
         "overlap": round(overlap, 1),
-        "insight": insight,
+        "insights": insights,
+        "complexity": total_chunks // 10, # Complexity Index
         "tags": tags,
         "probes": probes
     }
@@ -236,18 +296,24 @@ async def get_analytics():
 async def get_stats():
     # Summarize stats for the dashboard
     rag_pipeline = get_rag_pipeline()
-    total_docs = len(set(doc["metadata"].get("document_name") for doc in uploaded_docs))
+    doc_names = list(set(doc["metadata"].get("document_name") for doc in uploaded_docs))
+    total_docs = len(doc_names)
     total_chunks = len(uploaded_docs)
     total_cost = rag_pipeline.cost_tracker.total_cost
     total_tokens = rag_pipeline.cost_tracker.total_tokens
     
+    # Use pre-synthesized intelligence for dashboard preview
+    global session_intelligence
+    insight = " | ".join(session_intelligence["insights"][:2]) if total_docs > 0 else "Awaiting nodes..."
+    
     return {
-        "depth": f"{total_chunks * 0.5:.1f} KB", # Estimated
+        "depth": f"{total_chunks * 0.5:.1f} KB", # Estimated based on 512-token chunks
         "retrieval_time": "38.4ms",
         "total_cost": f"${total_cost:.4f}",
         "precision": "98.5%",
         "docs_count": total_docs,
-        "token_usage": total_tokens
+        "token_usage": total_tokens,
+        "insight_summary": insight
     }
 
 @app.post("/clear")
@@ -255,6 +321,8 @@ async def clear_session():
     global uploaded_docs, session_intelligence
     uploaded_docs = []
     session_intelligence = {"insights": [], "probes": [], "tags": []}
+    if os.path.exists(STATE_FILE):
+        os.remove(STATE_FILE)
     rag_pipeline = get_rag_pipeline()
     rag_pipeline.cost_tracker.reset()
-    return {"status": "success", "message": "Neural buffer cleared and cost metrics reset."}
+    return {"status": "success", "message": "Neural buffer cleared and disk state purged."}

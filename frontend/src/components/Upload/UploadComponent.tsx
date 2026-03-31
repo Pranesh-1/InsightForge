@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Upload, File, Globe, Database, X, CheckCircle2, Loader2, Sparkles, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ingestFile, clearSession } from '@/lib/api';
+import { ingestFile, clearSession, getIngestionStatus } from '@/lib/api';
 
 const UploadComponent = ({ 
   files, 
@@ -12,21 +12,42 @@ const UploadComponent = ({
   setFiles: React.Dispatch<React.SetStateAction<any[]>> 
 }) => {
   const [isUploading, setIsUploading] = useState(false);
+  const [statusText, setStatusText] = useState("Initializing neural link...");
 
   const handleUpload = async (file: File) => {
     setIsUploading(true);
+    setStatusText("Uploading to matrix...");
     try {
       const data = await ingestFile(file);
-      setFiles(prev => [...prev, { 
-        name: data.filename, 
-        type: file.name.split('.').pop()?.toUpperCase() || 'Document', 
-        status: 'completed',
-        insights: data.insights
-      }]);
+      
+      const poll = setInterval(async () => {
+        try {
+          const status = await getIngestionStatus(file.name);
+          if (status.status === "completed") {
+            clearInterval(poll);
+            setFiles(prev => [...prev, { 
+              name: file.name, 
+              type: file.name.split('.').pop()?.toUpperCase() || 'Document', 
+              status: 'completed',
+              insights: status.insights || "Intelligence synthesis successful."
+            }]);
+            setIsUploading(false);
+          } else if (status.status === "error") {
+            clearInterval(poll);
+            setStatusText(`Error: ${status.stage}`);
+            setTimeout(() => setIsUploading(false), 5000);
+          } else {
+            setStatusText(status.stage);
+          }
+        } catch (e) {
+          console.error("Polling error", e);
+        }
+      }, 1500);
+
     } catch (error) {
       console.error("Upload failed", error);
-    } finally {
-      setIsUploading(false);
+      setStatusText("Upload failed.");
+      setTimeout(() => setIsUploading(false), 3000);
     }
   };
 
@@ -102,7 +123,7 @@ const UploadComponent = ({
 
       <div className="glass-obsidian rounded-3xl border-amber-primary/10 overflow-hidden shadow-2xl">
         <div className="p-8 border-b border-border-glow flex items-center justify-between bg-obsidian-card/50">
-          <h2 className="text-xl font-outfit font-bold text-text-luxury amber-text-glow">Management <span className="text-amber-primary">Console</span></h2>
+          <h2 className="text-xl font-outfit font-bold text-text-luxury amber-text-glow">Matrix <span className="text-amber-primary">Console</span></h2>
           <span className="text-[10px] text-amber-primary uppercase tracking-[0.3em] font-black bg-amber-primary/10 px-4 py-1.5 rounded-full border border-amber-primary/20">
             {files.length} ACTIVE NODES
           </span>
@@ -167,11 +188,11 @@ const UploadComponent = ({
                 </tr>
               )}
               {isUploading && (
-                <tr className="animate-pulse bg-gold-primary/5">
+                 <tr className="animate-pulse bg-gold-primary/5">
                   <td colSpan={4} className="px-6 py-8">
-                     <div className="flex items-center justify-center gap-3 text-gold-light text-sm">
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        Processing intelligence pipeline...
+                     <div className="flex items-center justify-center gap-3 text-gold-light text-sm font-medium tracking-wide">
+                        <Loader2 className="w-5 h-5 animate-spin text-amber-primary" />
+                        {statusText}
                      </div>
                   </td>
                 </tr>
@@ -184,27 +205,32 @@ const UploadComponent = ({
       {files.some(f => f.insights) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12 pb-10">
            {files.filter(f => f.insights).map((file, i) => (
-             <div 
+             <motion.div 
+               initial={{ opacity: 0, y: 20 }}
+               whileInView={{ opacity: 1, y: 0 }}
+               viewport={{ once: true }}
                key={i} 
                id={`insight-${file.name}`}
-               className="p-8 glass-obsidian border-amber-primary/10 rounded-[2rem] relative overflow-hidden group transition-all duration-500 hover:border-amber-primary/30"
+               className="p-8 glass-obsidian border-amber-primary/15 rounded-[2.5rem] relative overflow-hidden group transition-all duration-700 hover:border-amber-primary/30 bg-gradient-to-br from-obsidian-card to-bg-dark/40"
              >
-                <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
-                    <Sparkles className="w-20 h-20 text-amber-primary" />
-                </div>
-                <h3 className="text-amber-primary text-[10px] font-black uppercase tracking-[0.3em] mb-6 flex items-center gap-3">
-                   <div className="p-2 rounded-lg bg-amber-primary/10 border border-amber-primary/20">
+                <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity blur-2xl bg-amber-primary w-40 h-40 rounded-full" />
+                <h3 className="text-amber-primary text-[10px] font-black uppercase tracking-[0.4em] mb-8 flex items-center gap-3">
+                   <div className="p-2.5 rounded-xl bg-amber-primary/10 border border-amber-primary/20 shadow-glow">
                       <Sparkles className="w-4 h-4" />
                    </div>
-                   AI Neural Insights: {file.name}
+                   Intelligence Node: {file.name}
                 </h3>
-                <div className="text-xs md:text-sm text-text-dim whitespace-pre-wrap leading-relaxed font-medium">
+                <div className="text-sm md:text-base font-outfit text-text-luxury whitespace-pre-wrap leading-7 opacity-90">
                    {file.insights}
                 </div>
-                <div className="mt-8 pt-6 border-t border-border-glow flex items-center gap-2 text-[10px] text-amber-primary font-bold uppercase tracking-widest opacity-60">
-                   <CheckCircle2 className="w-3.5 h-3.5" /> Contextualized Retrieval Ready
+                <div className="mt-10 pt-6 border-t border-border-glow flex items-center justify-between text-[9px] text-amber-primary/60 font-black uppercase tracking-widest">
+                   <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Neural Integration Active
+                   </div>
+                   <span className="opacity-40 italic">Synthesized via Gemini-Flash-2.5</span>
                 </div>
-             </div>
+             </motion.div>
            ))}
         </div>
       )}

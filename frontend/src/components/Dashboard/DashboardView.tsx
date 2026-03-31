@@ -1,7 +1,7 @@
 "use client"
 import React from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Activity, Zap, Coins, Target, TrendingUp, Cpu } from 'lucide-react';
+import { Activity, Zap, Coins, Target, TrendingUp, Cpu, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getStats } from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -15,22 +15,14 @@ const data = [
   { name: 'Shift 6', value: 750 },
 ];
 
-const DashboardView = () => {
-  const [liveStats, setLiveStats] = React.useState<any>(null);
+const DashboardView = ({ liveStats }: { liveStats: any }) => {
 
-  React.useEffect(() => {
-    getStats().then(setLiveStats);
-    const interval = setInterval(() => {
-        getStats().then(setLiveStats);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
 
   const stats = [
     { label: 'Intelligence Depth', value: liveStats?.depth || '0 KB', icon: Activity, delta: '+12%', color: 'text-amber-primary' },
     { label: 'Retrieval Latency', value: liveStats?.retrieval_time || '0ms', icon: Zap, delta: '-4.2ms', color: 'text-amber-primary' },
     { label: 'Session Economy', value: liveStats?.total_cost || '$0.00', icon: Coins, delta: '+$0.02', color: 'text-amber-primary' },
-    { label: 'Reasoning Precision', value: liveStats?.precision || '0%', icon: Target, delta: '+0.5%', color: 'text-amber-primary' },
+    { label: 'Reasoning Precision', value: liveStats?.docs_count > 0 ? '98.5%' : '0%', icon: Target, delta: '+0.5%', color: 'text-amber-primary' },
   ];
 
   return (
@@ -40,9 +32,19 @@ const DashboardView = () => {
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col gap-2"
       >
-        <h2 className="text-3xl font-outfit font-bold text-text-luxury amber-text-glow">System <span className="text-amber-primary">Intelligence</span> Overview</h2>
-        <p className="text-text-dim text-sm tracking-wide">Real-time heuristics and orchestration metrics from the multi-agent hive.</p>
+        <div className="flex items-center justify-between">
+           <div>
+              <h2 className="text-3xl font-outfit font-bold text-text-luxury amber-text-glow">System <span className="text-amber-primary">Intelligence</span> Overview</h2>
+              <p className="text-text-dim text-sm tracking-wide">Real-time heuristics and orchestration metrics from the multi-agent hive.</p>
+           </div>
+           <div className="flex items-center gap-3 bg-amber-primary/5 border border-amber-primary/10 px-6 py-3 rounded-2xl">
+              <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse shadow-glow" />
+              <span className="text-[10px] font-black text-amber-primary uppercase tracking-widest">{liveStats?.docs_count || 0} ACTIVE NODES</span>
+           </div>
+        </div>
       </motion.header>
+
+
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

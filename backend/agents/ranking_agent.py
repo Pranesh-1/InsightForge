@@ -18,7 +18,7 @@ class RankingAgent:
                 self._model = "fallback"
         return self._model
 
-    async def rerank(self, query: str, candidates: List[Dict], top_k: int = 5) -> List[Dict]:
+    async def rerank(self, query: str, candidates: List[Dict], top_k: int = 25) -> List[Dict]:
         if not candidates:
             return []
             

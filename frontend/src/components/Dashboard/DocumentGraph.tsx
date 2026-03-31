@@ -87,42 +87,39 @@ const DocumentGraph = () => {
               );
             })}
             
-            {/* Nodes */}
-            {nodes.map((node, i) => (
-               <motion.g 
-                 key={node.id || i}
-                 initial={{ scale: 0, opacity: 0 }}
-                 animate={{ scale: 1, opacity: 1 }}
-                 transition={{ type: 'spring', damping: 15, delay: i * 0.1 }}
-                 className="cursor-pointer group"
-               >
-                  {/* Outer Aura */}
-                  <circle cx={node.x} cy={node.y} r="25" fill="#FFBF00" className="opacity-0 group-hover:opacity-[0.05] transition-opacity duration-500" />
-                  
-                  {/* Pulsing ring */}
-                  <circle cx={node.x} cy={node.y} r="10" fill="none" stroke="#FFBF00" strokeWidth="1.5" opacity="0.3">
-                     <animate attributeName="r" from="10" to="20" dur="4s" repeatCount="indefinite" />
-                     <animate attributeName="opacity" from="0.3" to="0" dur="4s" repeatCount="indefinite" />
-                  </circle>
-
-                  {/* Core Node */}
-                  <circle 
-                    cx={node.x} cy={node.y} r="6" 
-                    fill="#FFBF00" 
-                    filter="url(#glow)"
-                    className="amber-glow group-hover:scale-125 transition-transform" 
-                  />
-                  
-                  {/* Label - Positioned strategically to avoid overlap */}
-                  <text 
-                    x={node.x} y={node.y + 25} 
-                    textAnchor="middle"
-                    className="text-[8px] fill-text-luxury select-none font-black uppercase tracking-[0.2em] opacity-50 group-hover:opacity-100 group-hover:fill-amber-primary transition-all pointer-events-none"
-                  >
-                    {node.name}
-                  </text>
-               </motion.g>
-            ))}
+             {/* Nodes */}
+             {nodes.map((node, i) => (
+                <g 
+                  key={node.id || i}
+                  className="cursor-default"
+                >
+                   {/* Outer Aura - Static fallback */}
+                   <circle cx={node.x} cy={node.y} r="25" fill="#FFBF00" className="opacity-[0.02] transition-opacity duration-500" />
+                   
+                   {/* Pulsing ring - Subtle background pulse */}
+                   <circle cx={node.x} cy={node.y} r="10" fill="none" stroke="#FFBF00" strokeWidth="1" opacity="0.1">
+                      <animate attributeName="r" from="10" to="20" dur="8s" repeatCount="indefinite" />
+                      <animate attributeName="opacity" from="0.1" to="0" dur="8s" repeatCount="indefinite" />
+                   </circle>
+ 
+                   {/* Core Node - Static Glow */}
+                   <circle 
+                     cx={node.x} cy={node.y} r="6" 
+                     fill="#FFBF00" 
+                     filter="url(#glow)"
+                     className="amber-glow shadow-glow-sm" 
+                   />
+                   
+                   {/* Label - Permanently Visible for technical clarity */}
+                   <text 
+                     x={node.x} y={node.y + 25} 
+                     textAnchor="middle"
+                     className="text-[8px] fill-text-dim/80 select-none font-black uppercase tracking-[0.2em] pointer-events-none"
+                   >
+                     {node.name}
+                   </text>
+                </g>
+             ))}
         </svg>
 
         {nodes.length === 0 && (

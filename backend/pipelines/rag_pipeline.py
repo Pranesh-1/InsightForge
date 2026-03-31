@@ -37,10 +37,9 @@ class RAGPipeline:
                 chunks = self.hybrid_search.search(sub_q, q_vector, all_docs)
                 all_retrieved_chunks.extend(chunks)
                 
-            # 4. De-duplicate & Rerank
+            # 4. De-duplicate & Rerank (Deep reasoning requires more context)
             unique_chunks = {chunk["text"]: chunk for chunk in all_retrieved_chunks}.values()
-            # Increase rerank limit to utilize Gemini context
-            top_chunks = await self.ranking_agent.rerank(rewritten_query, list(unique_chunks))
+            top_chunks = await self.ranking_agent.rerank(rewritten_query, list(unique_chunks), top_k=RETRIEVAL_TOP_K)
             top_chunks = top_chunks[:RETRIEVAL_TOP_K]
             
             # 5. Reason & Synthesize

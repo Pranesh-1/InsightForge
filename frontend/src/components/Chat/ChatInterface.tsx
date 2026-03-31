@@ -4,6 +4,8 @@ import { Send, Bot, User, Paperclip, ChevronRight, Info, ExternalLink, Trash2, M
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { queryRAG, ingestFile } from '@/lib/api';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -156,12 +158,14 @@ const ChatInterface = ({
               
               <div className={cn("space-y-4", msg.role === 'user' ? "text-right" : "text-left")}>
                 <div className={cn(
-                  "p-5 rounded-2xl text-[15px] leading-relaxed shadow-lg transition-all",
+                  "p-6 rounded-[1.5rem] text-sm font-outfit leading-7 shadow-2xl backdrop-blur-md transition-all prose prose-invert prose-amber max-w-none",
                   msg.role === 'user' 
-                    ? "bg-gradient-to-br from-amber-primary to-amber-secondary text-obsidian font-semibold" 
-                    : "glass-obsidian border border-amber-primary/10 text-text-luxury"
+                    ? "bg-amber-primary text-bg-dark font-bold rounded-tr-none ml-auto" 
+                    : "glass-obsidian border border-amber-primary/10 text-text-luxury rounded-tl-none"
                 )}>
-                  {msg.content}
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {msg.content}
+                  </ReactMarkdown>
                 </div>
                 
                 {msg.role === 'assistant' && (

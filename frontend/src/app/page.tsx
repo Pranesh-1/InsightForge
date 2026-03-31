@@ -17,15 +17,34 @@ interface Message {
 export default function Home() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [files, setFiles] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>(null);
+  const [analytics, setAnalytics] = useState<any>(null);
   const [messages, setMessages] = useState<Message[]>([
     { role: 'assistant', content: "Neural engines synchronized. I am InsightForge. Feed me data for deep intelligence synthesis." }
   ]);
   const [chatQuery, setChatQuery] = useState<string | null>(null);
 
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [s, a] = await Promise.all([
+          import('@/lib/api').then(m => m.getStats()),
+          import('@/lib/api').then(m => m.getAnalytics())
+        ]);
+        setStats(s);
+        setAnalytics(a);
+      } catch (e) {
+        console.error("Telemetry sync failed", e);
+      }
+    };
+    fetchData();
+    const interval = setInterval(fetchData, 5000);
+    return () => clearInterval(interval);
+  }, []);
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <DashboardView />;
+        return <DashboardView liveStats={stats} />;
       case 'chat':
         return <ChatInterface 
           messages={messages} 
@@ -36,12 +55,15 @@ export default function Home() {
       case 'upload':
         return <UploadComponent files={files} setFiles={setFiles} />;
       case 'analytics':
-        return <AnalyticsView onProbeSelect={(query) => {
-          setChatQuery(query);
-          setActiveTab('chat');
-        }} />;
+        return <AnalyticsView 
+          data={analytics}
+          onProbeSelect={(query) => {
+            setChatQuery(query);
+            setActiveTab('chat');
+          }} 
+        />;
       default:
-        return <DashboardView />;
+        return <DashboardView liveStats={stats} />;
     }
   };
 

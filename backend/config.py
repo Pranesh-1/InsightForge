@@ -19,8 +19,8 @@ RERANKER_MODEL = "BAAI/bge-reranker-small"
 RETRIEVAL_TOP_K = 25  # High-volume retrieval enabled
 
 # Agent Configurations (Full Gemini Core)
-PLANNER_MODEL = "models/gemini-2.0-flash"
-REASONING_MODEL = "models/gemini-2.0-flash"
-REWRITE_MODEL = "models/gemini-2.0-flash" 
-SYNTHESIS_MODEL = "models/gemini-2.0-flash"
-GEMINI_MODEL = "models/gemini-2.0-flash"
+PLANNER_MODEL = "models/gemini-2.5-flash"
+REASONING_MODEL = "models/gemini-2.5-flash"
+REWRITE_MODEL = "models/gemini-2.5-flash" 
+SYNTHESIS_MODEL = "models/gemini-2.5-flash"
+GEMINI_MODEL = "models/gemini-2.5-flash"

@@ -13,7 +13,7 @@ class ReasoningAgent:
             formatted_context += f"[{i+1}] {chunk['text']}\nMetadata: {chunk['metadata']}\n\n"
             
         messages = [
-            {"role": "system", "content": "You are a Document Reasoning Assistant. Use the provided context to answer the user's question accurately. Provide inline citations in the format [source_name, page_number]. If the answer is not in the context, say 'I could not find information in the provided documents.'"},
+            {"role": "system", "content": "You are a Senior Technical Reasoning Assistant. Use the provided context to answer the user's query with extreme precision. Use inline citations [source, page].\nSTYLE: Provide a CONCISE, NEAT, and bulleted executive summary first, then brief supporting details. Avoid dense paragraphs. If the answer is not in the context, state it clearly."},
             {"role": "user", "content": f"Context:\n{formatted_context}\n\nQuestion: {query}"}
         ]
         
