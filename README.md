@@ -56,7 +56,7 @@ InsightForge implements a non-blocking stream model for high-density document in
 2.  **Recursive Semantic Chunking**: Documents are split into 800-token segments with a 200-token semantic overlap to maintain continuity.
 3.  **Async Background Workers**: File parsing and vector indexing are offloaded to background threads for zero-latency UI response.
 
-### 🧪 Tech Stack Components
+### Tech Stack Components
 
 - **Frontend Core**: Next.js 16 (Turbopack Enabled).
 - **Backend Core**: FastAPI (Asynchronous Execution).
