@@ -1,5 +1,5 @@
 "use client"
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import ChatInterface from '@/components/Chat/ChatInterface';
 import UploadComponent from '@/components/Upload/UploadComponent';
@@ -41,6 +41,12 @@ export default function Home() {
     const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
   }, []);
+
+  // Reset scroll to top whenever the active tab changes
+  useEffect(() => {
+    const el = document.getElementById('main-scroll');
+    if (el) el.scrollTop = 0;
+  }, [activeTab]);
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
@@ -69,15 +75,6 @@ export default function Home() {
 
   return (
     <DashboardLayout activeTab={activeTab} setActiveTab={setActiveTab}>
-      <div className="mb-8">
-        <h1 className="text-3xl font-serif text-text-primary capitalize">
-          {activeTab} <span className="text-gold-light italic">Intelligence</span>
-        </h1>
-        <p className="text-text-muted text-sm mt-1">
-          InsightForge Multi-Agent RAG Orchestrator v1.0.4
-        </p>
-      </div>
-      
       {renderContent()}
     </DashboardLayout>
   );

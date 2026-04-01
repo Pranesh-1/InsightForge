@@ -168,26 +168,7 @@ const ChatInterface = ({
                   </ReactMarkdown>
                 </div>
                 
-                {msg.role === 'assistant' && (
-                  <div className="flex flex-wrap gap-2">
-                    <div className="text-[10px] text-text-dim uppercase tracking-[0.2em] flex items-center gap-2 mb-1 w-full font-bold">
-                      <div className="w-2 h-2 rounded-full bg-amber-primary animate-pulse"></div>
-                      Intelligence Sources
-                    </div>
-                    {msg.citations && msg.citations.map((cite: any, cIdx: number) => (
-                      <motion.button 
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        key={cIdx} 
-                        className="flex items-center gap-2 px-4 py-2 bg-obsidian-card border border-amber-primary/20 rounded-xl text-[12px] text-amber-primary hover:bg-amber-dim hover:border-amber-primary/40 transition-all group amber-glow"
-                      >
-                        <span className="font-bold opacity-70">[{cite.idx}]</span>
-                        <span className="font-medium">{cite.source} (P{cite.page})</span>
-                        <ChevronRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
-                      </motion.button>
-                    ))}
-                  </div>
-                )}
+
               </div>
             </motion.div>
           ))}

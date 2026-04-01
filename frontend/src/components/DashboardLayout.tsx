@@ -17,7 +17,7 @@ export default function DashboardLayout({
     <div className="min-h-screen bg-obsidian text-text-luxury flex font-inter">
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
       
-      <main className="flex-1 ml-64 flex flex-col relative overflow-hidden">
+      <main className="flex-1 ml-64 flex flex-col relative">
         {/* Background Mesh Overlay */}
         <div className="absolute inset-0 mesh-bg -z-10 opacity-20"></div>
 
@@ -51,7 +51,7 @@ export default function DashboardLayout({
         </header>
 
         {/* Dynamic Content Area */}
-        <div className="p-10 flex-1 overflow-y-auto scrollbar-hide">
+        <div id="main-scroll" className="p-10 flex-1 overflow-y-auto scrollbar-hide">
           {children}
         </div>
       </main>
